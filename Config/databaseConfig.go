@@ -1,14 +1,5 @@
 package config
 
-import "gorm.io/gorm"
-
 // Here we have a database configuration
 
-var DB *gorm.DB
-var err error
-const DNS = ""
-
-func Connection (){
-
-
-}
+const DNS = "root:admin@tcp(127.0.0.1:3308)/e-school?charset=utf8mb4"
