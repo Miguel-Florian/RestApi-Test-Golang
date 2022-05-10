@@ -1,21 +1,19 @@
 package controllers
 
-import (
-	"net/http"
-)
+import "github.com/gin-gonic/gin"
 
-func CreateUser(w http.ResponseWriter, r *http.Request) {
+func CreateUser(c *gin.Context) {
 	return
 }
-func LoginUser(w http.ResponseWriter, r *http.Request) {
+func LoginUser(c *gin.Context) {
 	return
 }
-func GetUserById(w http.ResponseWriter, r *http.Request) {
+func GetUserById(c *gin.Context) {
 	return
 }
-func GetAllUsers(w http.ResponseWriter, r *http.Request) {
+func GetAllUsers(c *gin.Context) {
 	return
 }
-func DeleteUser(w http.ResponseWriter, r *http.Request) {
+func DeleteUser(c *gin.Context) {
 	return
 }
