@@ -1,6 +1,6 @@
 package models
 
-import "gopkg.in/mgo.v2/bson"
+/*import "gopkg.in/mgo.v2/bson"
 
 type User struct {
 	Id        bson.ObjectId `bson:"_id,omitempty" json:"id"`
@@ -10,3 +10,4 @@ type User struct {
 	Password  string        `json:"password,omitempty"`
 	//HashPassword []byte        `json:"hashpassword,omitempty "`
 }
+*/
