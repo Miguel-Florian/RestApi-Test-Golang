@@ -1,13 +1,22 @@
 package routers
 
 import (
+	"net/http"
+
 	controllers "github.com/Miguel-Florian/E-School/Controllers"
 	"github.com/gin-gonic/gin"
 )
 
 func InitAllRoutes() {
 	router := gin.Default()
-	router.GET("/user/register", controllers.CreateUser)
+	router.SetTrustedProxies(nil)
+	router.LoadHTMLGlob("Templates/*")
+
+	router.GET("/user/register", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "register.html", gin.H{
+			"title": "Register",
+		})
+	})
 	router.GET("/user/login", controllers.LoginUser)
 	router.POST("/user/:id", controllers.GetUserById)
 	router.POST("/user/", controllers.GetAllUsers)
