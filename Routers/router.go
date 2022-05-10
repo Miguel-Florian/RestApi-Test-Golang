@@ -1,16 +1,23 @@
 package routers
 
 import (
-	"log"
-	"net/http"
-
-	"github.com/gorilla/mux"
+	controllers "github.com/Miguel-Florian/E-School/Controllers"
+	"github.com/gin-gonic/gin"
 )
 
 func InitAllRoutes() {
-	router := mux.NewRouter().StrictSlash(false)
-	router = SetUserRoutes(router) // init routes for user
-	router = SetBookRoutes(router) // init routes for book
-	
-	log.Fatal(http.ListenAndServe(":8000",router))
+	router := gin.Default()
+	router.GET("/user/register", controllers.CreateUser)
+	router.GET("/user/login", controllers.LoginUser)
+	router.POST("/user/:id", controllers.GetUserById)
+	router.POST("/user/", controllers.GetAllUsers)
+	router.DELETE("/users/:id", controllers.DeleteUser)
+
+	router.POST("/book", controllers.CreateBook)
+	router.PUT("/book/:id", controllers.UpdateBook)
+	router.GET("/book/:id", controllers.GetBookById)
+	router.GET("/books", controllers.GetAllBooks)
+	router.DELETE("/book/:id", controllers.DeleteBook)
+
+	router.Run("localhost:8080")
 }

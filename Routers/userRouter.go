@@ -1,6 +1,6 @@
 package routers
 
-import (
+/*import (
 	controllers "github.com/Miguel-Florian/E-School/Controllers"
 	"github.com/gorilla/mux"
 )
@@ -16,6 +16,7 @@ func SetUserRoutes(router *mux.Router) *mux.Router {
 	/*router.PathPrefix("/notes").Handler(negroni.New(
 		negroni.HandlerFunc(common.Authorize),
 		negroni.Wrap(noteRouter),
-	))*/
+	))
 	return router
 }
+*/
