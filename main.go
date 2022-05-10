@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	fmt.Println("This Site is building, it contains e-book for programming languages")
-	router.InitAllRoutes() // contains all routes with middlewares
-	// routers initialization
+	fmt.Println("Starting server ...")
+	//controllers.InitialBookMigration()
+	router.InitAllRoutes() // Initialize all routes
 }
