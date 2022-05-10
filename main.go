@@ -10,4 +10,5 @@ func main() {
 	fmt.Println("Starting server ...")
 	//controllers.InitialBookMigration()
 	router.InitAllRoutes() // Initialize all routes
+	//config.TemplateBuilder()
 }
