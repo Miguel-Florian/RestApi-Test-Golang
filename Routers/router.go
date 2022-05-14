@@ -1,8 +1,6 @@
 package routers
 
 import (
-	"net/http"
-
 	controllers "github.com/Miguel-Florian/E-School/Controllers"
 	"github.com/gin-gonic/gin"
 )
@@ -12,16 +10,14 @@ func InitAllRoutes() {
 	router.SetTrustedProxies(nil)
 	router.LoadHTMLGlob("Templates/*")
 
-	router.GET("/user/register", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "register.html", gin.H{
-			"title": "Register",
-		})
-	})
+	//Routes for User entity
+	router.GET("/user/register", controllers.CreateUser)
 	router.GET("/user/login", controllers.LoginUser)
 	router.POST("/user/:id", controllers.GetUserById)
 	router.POST("/user/", controllers.GetAllUsers)
 	router.DELETE("/users/:id", controllers.DeleteUser)
 
+	// Routes for Book entity
 	router.POST("/book", controllers.CreateBook)
 	router.PUT("/book/:id", controllers.UpdateBook)
 	router.GET("/book/:id", controllers.GetBookById)
