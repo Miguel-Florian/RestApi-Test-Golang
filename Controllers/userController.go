@@ -1,13 +1,15 @@
 package controllers
 
 import (
-	"log"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 
 func CreateUser(c *gin.Context) {
-	log.Println("hello")
+	c.HTML(http.StatusOK, "register.html", gin.H{
+		"title": "Register",
+	})
 }
 func LoginUser(c *gin.Context) {
 	return
