@@ -20,6 +20,7 @@ var validate = validator.New()
 
 func CreateUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
+
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		var user models.User
 		defer cancel()
@@ -85,13 +86,13 @@ func GetAllUsers() gin.HandlerFunc {
 func GetUserById() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		userId := c.Param("userId")
+		userId := c.Param("id")
 		var user models.User
 		defer cancel()
 
 		objId, _ := primitive.ObjectIDFromHex(userId)
 
-		err := userCollection.FindOne(ctx, bson.M{"id": objId}).Decode(&user)
+		err := userCollection.FindOne(ctx, bson.M{"_id": objId}).Decode(&user)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, responses.UserResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}})
 			return
@@ -103,7 +104,7 @@ func GetUserById() gin.HandlerFunc {
 func UpdateUserById() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		userId := c.Param("userId")
+		userId := c.Param("id")
 		var user models.User
 		defer cancel()
 		objId, _ := primitive.ObjectIDFromHex(userId)
@@ -120,8 +121,8 @@ func UpdateUserById() gin.HandlerFunc {
 			return
 		}
 
-		update := bson.M{"FirstName": user.FirstName, "LastName": user.LastName, "Email": user.Email, "Password": user.Password}
-		result, err := userCollection.UpdateOne(ctx, bson.M{"id": objId}, bson.M{"$set": update})
+		update := bson.M{"firstname": user.FirstName, "lastname": user.LastName, "email": user.Email, "password": user.Password}
+		result, err := userCollection.UpdateOne(ctx, bson.M{"_id": objId}, bson.M{"$set": update})
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, responses.UserResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}})
 			return
@@ -130,7 +131,7 @@ func UpdateUserById() gin.HandlerFunc {
 		//get updated user details
 		var updatedUser models.User
 		if result.MatchedCount == 1 {
-			err := userCollection.FindOne(ctx, bson.M{"id": objId}).Decode(&updatedUser)
+			err := userCollection.FindOne(ctx, bson.M{"_id": objId}).Decode(&updatedUser)
 			if err != nil {
 				c.JSON(http.StatusInternalServerError, responses.UserResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}})
 				return
@@ -143,12 +144,12 @@ func UpdateUserById() gin.HandlerFunc {
 func DeleteUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		userId := c.Param("userId")
+		userId := c.Param("id")
 		defer cancel()
 
 		objId, _ := primitive.ObjectIDFromHex(userId)
 
-		result, err := userCollection.DeleteOne(ctx, bson.M{"id": objId})
+		result, err := userCollection.DeleteOne(ctx, bson.M{"_id": objId})
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, responses.UserResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}})
 			return
@@ -166,6 +167,7 @@ func DeleteUser() gin.HandlerFunc {
 		)
 	}
 }
+
 func LoginUser(c *gin.Context) {
 	return
 }
