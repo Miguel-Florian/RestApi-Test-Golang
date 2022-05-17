@@ -1,7 +1,11 @@
-# E-School is an platform dedied for storing programming book for a junior developers
+# This project isn't a real project. I done it to train myself and learn Go language programming
 
-### We are construct it step by step and start it today (May, 3rd 2022)
+## Steps
 
-#### Try to link my models with my mongodb database, then write the logic of each function inside the ressources controllers
-
-#### After it, we pass on the front end part, this work'll realize partially with vuejs, or reactjs at 40% and at 60% with html, css and js , think to write the first version of our readme file
+>> Build all routes with routers with the Gin package
+>> Etablish the controllers functions
+>> contruct ours data models and connect them with mongoDB
+>> Write the logic of controllers functions
+>> Test the results with the json format
+>> Code ours all interfaces
+>> Check how can we upload a book on mongodb and check how can we download it
