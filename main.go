@@ -20,5 +20,11 @@ func main() {
 	routers.UserRoute(r)
 	routers.BookRoute(r)
 
+	r.GET("/", func(c *gin.Context) {
+		c.JSON(200, gin.H{
+			"data": "Hello from Gin-gonic & mongoDB",
+		})
+	})
+
 	r.Run("localhost:8080")
 }
