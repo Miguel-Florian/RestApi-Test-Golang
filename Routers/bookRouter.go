@@ -1,22 +1,15 @@
 package routers
 
-/*import (
-	controllers "github.com/Miguel-Florian/E-School/Controllers"
-	"github.com/gorilla/mux"
+import (
+	controllers "github.com/Miguel-Florian/Electronic-bookshop-of-Higher-science-computer-school-of-Logbessou/Controllers"
+	"github.com/gin-gonic/gin"
 )
 
-func SetBookRoutes(router *mux.Router) *mux.Router {
-	bookRoutes := mux.NewRouter()
-	bookRoutes.HandleFunc("/book", controllers.CreateBook).Methods("POST")
-	bookRoutes.HandleFunc("/book/{id}", controllers.UpdateBook).Methods("PUT")
-	bookRoutes.HandleFunc("/book/{id}", controllers.GetBookById).Methods("GET")
-	bookRoutes.HandleFunc("/books", controllers.GetAllBooks).Methods("GET")
-	bookRoutes.HandleFunc("/book/{id}", controllers.DeleteBook).Methods("DELETE")
-	//bookRoutes.HandleFunc("/notes/tasks/{id}", controllers.GetNotesByTask).Methods("GET")
-	/*router.PathPrefix("/notes").Handler(negroni.New(
-		negroni.HandlerFunc(common.Authorize),
-		negroni.Wrap(noteRouter),
-	))
-	return router
+func BookRoute(router *gin.Engine) {
+	//All routes related to book comes here
+	router.POST("/book", controllers.CreateBook)
+	router.PUT("/book/:id", controllers.UpdateBook)
+	router.GET("/book/:id", controllers.GetBookById)
+	router.GET("/books", controllers.GetAllBooks)
+	router.DELETE("/book/:id", controllers.DeleteBook)
 }
-*/
