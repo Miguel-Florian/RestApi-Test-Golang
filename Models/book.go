@@ -1,14 +1,12 @@
 package models
 
-/*import (
-	"gorm.io/gorm"
-)
+import "go.mongodb.org/mongo-driver/bson/primitive"
 
 type Book struct {
-	gorm.Model
-	Name        string   `json:"name"`
-	Description string   `json:"description"`
-	Publier     string   `json:"publier,omitempty"`
-	Auteur      []string `json:"auteurs"`
-	Catégories  []string `json:"categories"`
-}*/
+	ID          primitive.ObjectID `json:"_id,onitempty" bson:"_id,onitempty"`
+	Title       string             `json:"title,onitempty" bson:"title,onitempty"`
+	Description string             `json:"description" bson:"title,descritpion"`
+	DateSortie  string             `json:"date sortie,omitempty" bson:"date sortie,omitempty"`
+	Auteur      []string           `json:"auteurs,onitempty" bson:"auteurs,onitempty"`
+	Catégories  []string           `json:"categories,onitempty" bson:"categories,onitempty"`
+}
