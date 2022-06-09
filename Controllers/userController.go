@@ -12,6 +12,7 @@ import (
 	"github.com/go-playground/validator"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"golang.org/x/crypto/bcrypt"
 	"gopkg.in/mgo.v2/bson"
 )
 
@@ -44,8 +45,28 @@ func CreateUser() gin.HandlerFunc {
 			Email:     user.Email,
 			Password:  user.Password,
 		}
+		pass, err := bcrypt.GenerateFromPassword([]byte(newUser.Password), 14)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, responses.UserResponse{Status: http.StatusBadRequest, Message: "error", Data: map[string]interface{}{"data": "Encrypttion Failed"}})
+			return
+		}
+		if string(pass) == "" {
+			c.JSON(http.StatusBadRequest, responses.UserResponse{Status: http.StatusBadRequest, Message: "error", Data: map[string]interface{}{"data": "Invalid Password"}})
+			return
+		}
+		if user.Email == "" {
+			c.JSON(http.StatusBadRequest, responses.UserResponse{Status: http.StatusBadRequest, Message: "error", Data: map[string]interface{}{"data": "Invalid Password"}})
+			return
+		}
+		newUserWithCrypt := models.User{
+			ID:        primitive.NewObjectID(),
+			FirstName: user.FirstName,
+			LastName:  user.LastName,
+			Email:     user.Email,
+			Password:  string(pass[:]),
+		}
 
-		result, err := userCollection.InsertOne(ctx, newUser)
+		result, err := userCollection.InsertOne(ctx, newUserWithCrypt)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, responses.UserResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}})
 			return
@@ -120,9 +141,17 @@ func UpdateUserById() gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, responses.UserResponse{Status: http.StatusBadRequest, Message: "error", Data: map[string]interface{}{"data": validationErr.Error()}})
 			return
 		}
-
-		update := bson.M{"firstname": user.FirstName, "lastname": user.LastName, "email": user.Email, "password": user.Password}
-		result, err := userCollection.UpdateOne(ctx, bson.M{"_id": objId}, bson.M{"$set": update})
+		passcrypt, err := bcrypt.GenerateFromPassword([]byte(user.Password), 14)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, responses.UserResponse{Status: http.StatusBadRequest, Message: "error", Data: map[string]interface{}{"data": "Encrypttion Failed"}})
+			return
+		}
+		if string(passcrypt) == "" {
+			c.JSON(http.StatusBadRequest, responses.UserResponse{Status: http.StatusBadRequest, Message: "error", Data: map[string]interface{}{"data": "Invalid Password"}})
+			return
+		}
+		updated := bson.M{"firstname": user.FirstName, "lastname": user.LastName, "email": user.Email, "password": string(passcrypt[:])}
+		result, err := userCollection.UpdateOne(ctx, bson.M{"_id": objId}, bson.M{"$set": updated})
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, responses.UserResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}})
 			return
@@ -137,8 +166,9 @@ func UpdateUserById() gin.HandlerFunc {
 				return
 			}
 		}
-
+		//updatedUser.Password = string(passcrypt)
 		c.JSON(http.StatusOK, responses.UserResponse{Status: http.StatusOK, Message: "success", Data: map[string]interface{}{"data": updatedUser}})
+
 	}
 }
 func DeleteUser() gin.HandlerFunc {
