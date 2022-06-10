@@ -40,6 +40,7 @@ func CreateUser() gin.HandlerFunc {
 
 		newUser := models.User{
 			ID:        primitive.NewObjectID(),
+			Username:  user.Username,
 			FirstName: user.FirstName,
 			LastName:  user.LastName,
 			Email:     user.Email,
@@ -60,6 +61,7 @@ func CreateUser() gin.HandlerFunc {
 		}
 		newUserWithCrypt := models.User{
 			ID:        primitive.NewObjectID(),
+			Username:  user.Username,
 			FirstName: user.FirstName,
 			LastName:  user.LastName,
 			Email:     user.Email,
@@ -104,7 +106,7 @@ func GetAllUsers() gin.HandlerFunc {
 		)
 	}
 }
-func GetUserById() gin.HandlerFunc {
+func GetUserById() gin.HandlerFunc { 
 	return func(c *gin.Context) {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		userId := c.Param("id")
@@ -150,7 +152,7 @@ func UpdateUserById() gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, responses.UserResponse{Status: http.StatusBadRequest, Message: "error", Data: map[string]interface{}{"data": "Invalid Password"}})
 			return
 		}
-		updated := bson.M{"firstname": user.FirstName, "lastname": user.LastName, "email": user.Email, "password": string(passcrypt[:])}
+		updated := bson.M{"username": user.Username, "firstname": user.FirstName, "lastname": user.LastName, "email": user.Email, "password": string(passcrypt[:])}
 		result, err := userCollection.UpdateOne(ctx, bson.M{"_id": objId}, bson.M{"$set": updated})
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, responses.UserResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}})
@@ -199,5 +201,8 @@ func DeleteUser() gin.HandlerFunc {
 }
 
 func LoginUser(c *gin.Context) {
+	return
+}
+func RegisterUser(c *gin.Context) {
 	return
 }
