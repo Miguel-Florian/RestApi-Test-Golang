@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+	"log"
 	"net/http"
 	"time"
 
@@ -56,7 +57,7 @@ func CreateUser() gin.HandlerFunc {
 			return
 		}
 		if user.Email == "" {
-			c.JSON(http.StatusBadRequest, responses.UserResponse{Status: http.StatusBadRequest, Message: "error", Data: map[string]interface{}{"data": "Invalid Password"}})
+			c.JSON(http.StatusBadRequest, responses.UserResponse{Status: http.StatusBadRequest, Message: "error", Data: map[string]interface{}{"data": "Invalid Email"}})
 			return
 		}
 		newUserWithCrypt := models.User{
@@ -106,7 +107,7 @@ func GetAllUsers() gin.HandlerFunc {
 		)
 	}
 }
-func GetUserById() gin.HandlerFunc { 
+func GetUserById() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		userId := c.Param("id")
@@ -124,6 +125,20 @@ func GetUserById() gin.HandlerFunc {
 		c.JSON(http.StatusOK, responses.UserResponse{Status: http.StatusOK, Message: "success", Data: map[string]interface{}{"data": user}})
 	}
 }
+
+/*func GetUserByEmail(u models.User) gin.HandlerFunc{
+	return func(c *gin.Context) {
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		err := userCollection.FindOne(ctx, bson.M{"email": u.Email}).Decode(&u)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, responses.UserResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}})
+			return
+		}
+		c.JSON(http.StatusOK, responses.UserResponse{Status: http.StatusOK, Message: "success", Data: map[string]interface{}{"data": u}})
+	}
+}*/
 func UpdateUserById() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -201,8 +216,63 @@ func DeleteUser() gin.HandlerFunc {
 }
 
 func LoginUser(c *gin.Context) {
+	var u models.User
+	c.Request.ParseForm()
+	email := c.Request.FormValue("email")
+	password := c.Request.FormValue("password")
+	log.Println(email, password, u)
+	/*if email == "" || password == "" {
+		c.Writer.Write(([]byte("Invalid Username or password")))
+		return
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	err := userCollection.FindOne(ctx, bson.M{"username": email}).Decode(u)
+	log.Println(err)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, responses.UserResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}})
+		return
+	}*/
+	GenerateToken(c)
 	return
 }
 func RegisterUser(c *gin.Context) {
-	return
+	c.Request.ParseForm()
+	username := c.Request.FormValue("username")
+	firstname := c.Request.FormValue("firstname")
+	lastname := c.Request.FormValue("lastname")
+	email := c.Request.FormValue("email")
+	password := c.Request.FormValue("password")
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	pass, err := bcrypt.GenerateFromPassword([]byte(password), 14)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, responses.UserResponse{Status: http.StatusBadRequest, Message: "error", Data: map[string]interface{}{"data": "Encrypttion Failed"}})
+		return
+	}
+	if password != "" {
+		c.JSON(http.StatusBadRequest, responses.UserResponse{Status: http.StatusBadRequest, Message: "error", Data: map[string]interface{}{"data": "Invalid Password"}})
+		return
+	}
+	if email == "" {
+		c.JSON(http.StatusBadRequest, responses.UserResponse{Status: http.StatusBadRequest, Message: "error", Data: map[string]interface{}{"data": "Invalid Email"}})
+		return
+	}
+	user := models.User{
+		ID:        primitive.NewObjectID(),
+		Username:  username,
+		FirstName: firstname,
+		LastName:  lastname,
+		Email:     email,
+		Password:  string(pass[:]),
+	}
+	result, err := userCollection.InsertOne(ctx, user)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, responses.UserResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}})
+		return
+	}
+
+	c.JSON(http.StatusCreated, responses.UserResponse{Status: http.StatusCreated, Message: "success", Data: map[string]interface{}{"data": result}})
+
 }
