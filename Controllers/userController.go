@@ -221,7 +221,7 @@ func LoginUser(c *gin.Context) {
 	email := c.Request.FormValue("email")
 	password := c.Request.FormValue("password")
 	log.Println(email, password, u)
-	/*if email == "" || password == "" {
+	if email == "" || password == "" {
 		c.Writer.Write(([]byte("Invalid Username or password")))
 		return
 	}
@@ -233,7 +233,7 @@ func LoginUser(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, responses.UserResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}})
 		return
-	}*/
+	}
 	GenerateToken(c)
 	return
 }
