@@ -8,5 +8,5 @@
 - Write the logic of controllers functions (done)
 - Test the results with the json format (done)
 - Write authorization for each controllers / Jwt token for authentication
-- Code ours all interfaces
+- Coding interfaces
 - Check how can we upload a book on mongodb and check how can we download it
