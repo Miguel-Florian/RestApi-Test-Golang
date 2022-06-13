@@ -25,6 +25,7 @@ func main() {
 			"data": "Hello from Gin-gonic & mongoDB",
 		})
 	})
+	r.SetTrustedProxies(nil)
 
 	r.Run("localhost:8080")
 }

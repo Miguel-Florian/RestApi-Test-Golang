@@ -228,7 +228,7 @@ func LoginUser() gin.HandlerFunc {
 		defer cancel()
 		err := userCollection.FindOne(ctx, bson.M{"email": data_receive.Email}).Decode(&u)
 		if err != nil {
-			c.JSON(http.StatusNotFound, responses.UserResponse{Status: http.StatusNotFound, Message:"Unrecheable !", Data: map[string]interface{}{"data": err.Error()}})
+			c.JSON(http.StatusNotFound, responses.UserResponse{Status: http.StatusNotFound, Message: "Unrecheable !", Data: map[string]interface{}{"data": err.Error()}})
 			return
 		}
 		if err := bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(data_receive.Password)); err != nil {
@@ -239,13 +239,12 @@ func LoginUser() gin.HandlerFunc {
 			Issuer:    u.Email,
 			ExpiresAt: time.Now().Add(48 * time.Hour).Unix(),
 		})
-		expirationTime := time.Now().Add(48 * time.Hour).Unix()
 		token, err := claims.SignedString([]byte(SecretKey))
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, responses.UserResponse{Status: http.StatusInternalServerError, Message: "Couldn't login", Data: map[string]interface{}{"data": err.Error()}})
 			return
 		}
-		c.SetCookie("jwt-token", token, int(expirationTime), "/user/login", "localhost", false, true)
+		c.SetCookie("jwt-token", token, 7200, "/user/login", "localhost", false, true)
 
 		c.JSON(http.StatusAccepted, responses.UserResponse{Status: http.StatusCreated, Message: "success", Data: map[string]interface{}{"data": token}})
 	}
