@@ -1,6 +1,6 @@
 package middleware
 
-import (
+/*import (
 	common "github.com/Miguel-Florian/Electronic-bookshop-of-Higher-science-computer-school-of-Logbessou/Common"
 	"github.com/gin-gonic/gin"
 )
@@ -21,4 +21,4 @@ func Auth() gin.HandlerFunc {
 		}
 		context.Next()
 	}
-}
+}*/
