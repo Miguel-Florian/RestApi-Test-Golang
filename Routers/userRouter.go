@@ -11,6 +11,7 @@ func UserRoute(router *gin.Engine) {
 	router.POST("/user/save", controllers.CreateUser())
 	router.POST("/user/login", controllers.LoginUser())
 	router.POST("/user/register", controllers.RegisterUser())
+	router.POST("/user/logout", controllers.LogoutUser())
 	router.GET("/user/:id", controllers.GetUserById())
 	router.PUT("/user/update/:id", controllers.UpdateUserById())
 	router.GET("/users", controllers.GetAllUsers())
