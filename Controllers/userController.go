@@ -2,13 +2,13 @@ package controllers
 
 import (
 	"context"
-	"log"
 	"net/http"
 	"time"
 
 	config "github.com/Miguel-Florian/Electronic-bookshop-of-Higher-science-computer-school-of-Logbessou/Config"
 	models "github.com/Miguel-Florian/Electronic-bookshop-of-Higher-science-computer-school-of-Logbessou/Models"
 	"github.com/Miguel-Florian/Electronic-bookshop-of-Higher-science-computer-school-of-Logbessou/responses"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -19,6 +19,8 @@ import (
 
 var userCollection *mongo.Collection = config.GetCollection(config.DB, "users")
 var validate = validator.New()
+
+const SecretKey = "SECRETKEY"
 
 func CreateUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -215,9 +217,40 @@ func DeleteUser() gin.HandlerFunc {
 	}
 }
 
-func LoginUser(c *gin.Context) {
-	var u models.User
-	c.Request.ParseForm()
+func LoginUser() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var data_receive models.UserLogin
+		var u models.User
+		if err := c.ShouldBindJSON(&data_receive); err != nil {
+			return
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		err := userCollection.FindOne(ctx, bson.M{"email": data_receive.Email}).Decode(&u)
+		if err != nil {
+			c.JSON(http.StatusNotFound, responses.UserResponse{Status: http.StatusNotFound, Message:"Unrecheable !", Data: map[string]interface{}{"data": err.Error()}})
+			return
+		}
+		if err := bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(data_receive.Password)); err != nil {
+			c.JSON(http.StatusBadRequest, responses.UserResponse{Status: http.StatusBadRequest, Message: "Incorrect password", Data: map[string]interface{}{"data": err.Error()}})
+			return
+		}
+		claims := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.StandardClaims{
+			Issuer:    u.Email,
+			ExpiresAt: time.Now().Add(48 * time.Hour).Unix(),
+		})
+		expirationTime := time.Now().Add(48 * time.Hour).Unix()
+		token, err := claims.SignedString([]byte(SecretKey))
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, responses.UserResponse{Status: http.StatusInternalServerError, Message: "Couldn't login", Data: map[string]interface{}{"data": err.Error()}})
+			return
+		}
+		c.SetCookie("jwt-token", token, int(expirationTime), "/user/login", "localhost", false, true)
+
+		c.JSON(http.StatusAccepted, responses.UserResponse{Status: http.StatusCreated, Message: "success", Data: map[string]interface{}{"data": token}})
+	}
+
+	/*c.Request.ParseForm()
 	email := c.Request.FormValue("email")
 	password := c.Request.FormValue("password")
 	log.Println(email, password, u)
@@ -235,44 +268,77 @@ func LoginUser(c *gin.Context) {
 		return
 	}
 	GenerateToken(c)
+	return*/
+}
+func RegisterUser() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var u models.User
+		if err := c.ShouldBindJSON(&u); err != nil {
+			return
+		}
+		if u.Password == "" {
+			c.JSON(http.StatusBadRequest, responses.UserResponse{Status: http.StatusBadRequest, Message: "error", Data: map[string]interface{}{"data": "Invalid field, check it !"}})
+			return
+		}
+		pass, _ := bcrypt.GenerateFromPassword([]byte(u.Password), 14)
+		password := string(pass[:])
+		user := models.User{
+			ID:        primitive.NewObjectID(),
+			Username:  u.Username,
+			FirstName: u.FirstName,
+			LastName:  u.LastName,
+			Email:     u.Email,
+			Password:  password,
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		if user.Username == "" || user.FirstName == "" || user.LastName == "" || user.Email == "" {
+			c.JSON(http.StatusBadRequest, responses.UserResponse{Status: http.StatusBadRequest, Message: "error", Data: map[string]interface{}{"data": "Invalid field, check it !"}})
+			return
+		}
+		result, err := userCollection.InsertOne(ctx, user)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, responses.UserResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}})
+			return
+		}
+		c.JSON(http.StatusCreated, responses.UserResponse{Status: http.StatusCreated, Message: "success", Data: map[string]interface{}{"data": result}})
+	}
+}
+
+/*c.Request.ParseForm()
+username := c.Request.FormValue("username")
+firstname := c.Request.FormValue("firstname")
+lastname := c.Request.FormValue("lastname")
+email := c.Request.FormValue("email")
+password := c.Request.FormValue("password")
+ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+defer cancel()
+pass, err := bcrypt.GenerateFromPassword([]byte(password), 14)
+if err != nil {
+	c.JSON(http.StatusBadRequest, responses.UserResponse{Status: http.StatusBadRequest, Message: "error", Data: map[string]interface{}{"data": "Encrypttion Failed"}})
 	return
 }
-func RegisterUser(c *gin.Context) {
-	c.Request.ParseForm()
-	username := c.Request.FormValue("username")
-	firstname := c.Request.FormValue("firstname")
-	lastname := c.Request.FormValue("lastname")
-	email := c.Request.FormValue("email")
-	password := c.Request.FormValue("password")
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	pass, err := bcrypt.GenerateFromPassword([]byte(password), 14)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, responses.UserResponse{Status: http.StatusBadRequest, Message: "error", Data: map[string]interface{}{"data": "Encrypttion Failed"}})
-		return
-	}
-	if password != "" {
-		c.JSON(http.StatusBadRequest, responses.UserResponse{Status: http.StatusBadRequest, Message: "error", Data: map[string]interface{}{"data": "Invalid Password"}})
-		return
-	}
-	if email == "" {
-		c.JSON(http.StatusBadRequest, responses.UserResponse{Status: http.StatusBadRequest, Message: "error", Data: map[string]interface{}{"data": "Invalid Email"}})
-		return
-	}
-	user := models.User{
-		ID:        primitive.NewObjectID(),
-		Username:  username,
-		FirstName: firstname,
-		LastName:  lastname,
-		Email:     email,
-		Password:  string(pass[:]),
-	}
-	result, err := userCollection.InsertOne(ctx, user)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, responses.UserResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}})
-		return
-	}
-
-	c.JSON(http.StatusCreated, responses.UserResponse{Status: http.StatusCreated, Message: "success", Data: map[string]interface{}{"data": result}})
-
+if password != "" {
+	c.JSON(http.StatusBadRequest, responses.UserResponse{Status: http.StatusBadRequest, Message: "error", Data: map[string]interface{}{"data": "Invalid Password"}})
+	return
 }
+if email == "" {
+	c.JSON(http.StatusBadRequest, responses.UserResponse{Status: http.StatusBadRequest, Message: "error", Data: map[string]interface{}{"data": "Invalid Email"}})
+	return
+}
+user := models.User{
+	ID:        primitive.NewObjectID(),
+	Username:  username,
+	FirstName: firstname,
+	LastName:  lastname,
+	Email:     email,
+	Password:  string(pass[:]),
+}
+result, err := userCollection.InsertOne(ctx, user)
+if err != nil {
+	c.JSON(http.StatusInternalServerError, responses.UserResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}})
+	return
+}
+
+c.JSON(http.StatusCreated, responses.UserResponse{Status: http.StatusCreated, Message: "success", Data: map[string]interface{}{"data": result}})
+*/

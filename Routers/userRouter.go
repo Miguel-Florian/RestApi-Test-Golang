@@ -9,10 +9,10 @@ func UserRoute(router *gin.Engine) {
 	//router.LoadHTMLGlob("Templates/*")
 	//All routes related to users comes here
 	router.POST("/user/save", controllers.CreateUser())
-	router.POST("/user/login", (controllers.LoginUser))
-	router.POST("/user/register", controllers.RegisterUser)
+	router.POST("/user/login", controllers.LoginUser())
+	router.POST("/user/register", controllers.RegisterUser())
 	router.GET("/user/:id", controllers.GetUserById())
-	router.PUT("/user/:id", controllers.UpdateUserById())
+	router.PUT("/user/update/:id", controllers.UpdateUserById())
 	router.GET("/users", controllers.GetAllUsers())
-	router.DELETE("/user/:id", controllers.DeleteUser())
+	router.DELETE("/user/delete/:id", controllers.DeleteUser())
 }
