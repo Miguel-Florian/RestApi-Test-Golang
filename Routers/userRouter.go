@@ -8,12 +8,16 @@ import (
 func UserRoute(router *gin.Engine) {
 	//router.LoadHTMLGlob("Templates/*")
 	//All routes related to users comes here
-	router.POST("/user/save", controllers.CreateUser())
-	router.POST("/user/login", controllers.LoginUser())
-	router.POST("/user/register", controllers.RegisterUser())
-	router.POST("/user/logout", controllers.LogoutUser())
-	router.GET("/user/:id", controllers.GetUserById())
-	router.PUT("/user/update/:id", controllers.UpdateUserById())
-	router.GET("/users", controllers.GetAllUsers())
-	router.DELETE("/user/delete/:id", controllers.DeleteUser())
+	api := router.Group("/api/user")
+	{
+		api.POST("/save", controllers.CreateUser())
+		api.POST("/login", controllers.LoginUser())
+		api.POST("/register", controllers.RegisterUser())
+		api.POST("/logout", controllers.LogoutUser())
+		api.GET("/:id", controllers.GetUserById())
+		api.PUT("/update/:id", controllers.UpdateUserById())
+		api.GET("/users", controllers.GetAllUsers())
+		api.DELETE("/delete/:id", controllers.DeleteUser())
+	}
+
 }
