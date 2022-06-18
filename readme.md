@@ -7,6 +7,6 @@
 - contruct ours data models and connect them with mongoDB (done)
 - Write the logic of controllers functions (done)
 - Test the results with the json format (done)
-- Write authorization for each controllers / Jwt token for authentication
+- Write authorization for each controllers and Jwt token for authentication(done)
 - Coding interfaces
 - Check how can we upload a book on mongodb and check how can we download it
