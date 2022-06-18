@@ -10,7 +10,7 @@ type User struct {
 	FirstName string             `json:"firstname,onitempty" bson:"firstname,onitempty"`
 	LastName  string             `json:"lastname,onitempty,unique" bson:"lastname,onitempty"`
 	Email     string             `json:"email,onitempty" bson:"email,onitempty,unique"`
-	Password  string             `json:"-" bson:"password,onitempty"`
+	Password  string             `json:"password" bson:"password,onitempty"`
 	//HashPassword []byte        `json:"hashpassword,omitempty "`
 }
 type UserLogin struct {
