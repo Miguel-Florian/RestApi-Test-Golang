@@ -8,6 +8,7 @@ import (
 	config "github.com/Miguel-Florian/Electronic-bookshop-of-Higher-science-computer-school-of-Logbessou/Config"
 	models "github.com/Miguel-Florian/Electronic-bookshop-of-Higher-science-computer-school-of-Logbessou/Models"
 	"github.com/Miguel-Florian/Electronic-bookshop-of-Higher-science-computer-school-of-Logbessou/responses"
+
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator"
@@ -217,28 +218,66 @@ func LoginUser() gin.HandlerFunc {
 		defer cancel()
 		err := userCollection.FindOne(ctx, bson.M{"email": data_receive.Email}).Decode(&u)
 		if err != nil {
-			c.JSON(http.StatusNotFound, responses.UserResponse{Status: http.StatusNotFound, Message: "Unrecheable !", Data: map[string]interface{}{"data": err.Error()}})
+			c.JSON(http.StatusNotFound, responses.UserResponse{Status: http.StatusNotFound, Message: "Unrecaheable Email !", Data: map[string]interface{}{"data": err.Error() + "Email Introuvable"}})
 			return
 		}
 		if err := bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(data_receive.Password)); err != nil {
-			c.JSON(http.StatusBadRequest, responses.UserResponse{Status: http.StatusBadRequest, Message: "Incorrect password", Data: map[string]interface{}{"data": err.Error()}})
+			c.JSON(http.StatusBadRequest, responses.UserResponse{Status: http.StatusBadRequest, Message: "Incorrect password", Data: map[string]interface{}{"data": err.Error() + "Code de sécurité incorrect"}})
 			return
 		}
+		expTime := time.Now().Add(time.Hour * 24)
 		claims := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.StandardClaims{
+			ExpiresAt: expTime.Unix(),
+			Id:        u.FirstName + "" + u.LastName,
 			Issuer:    u.Email,
-			ExpiresAt: time.Now().Add(24 * time.Hour).Unix(),
 		})
 		token, err := claims.SignedString([]byte(SecretKey))
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, responses.UserResponse{Status: http.StatusInternalServerError, Message: "Couldn't login", Data: map[string]interface{}{"data": err.Error()}})
+			c.JSON(http.StatusInternalServerError, responses.UserResponse{Status: http.StatusInternalServerError, Message: "Couldn't login", Data: map[string]interface{}{"data": "Impossible de vous connecter"}})
 			return
 		}
-		c.SetCookie("jwt-token", token, 3600, "/user/login", "localhost", false, true)
+		cookie := http.Cookie{
+			Name:     "Jwt-Token",
+			Value:    token,
+			Path:     "/api/user/login",
+			Domain:   "Localhost",
+			Expires:  expTime,
+			MaxAge:   3600,
+			Secure:   false,
+			HttpOnly: true,
+		}
+		c.SetCookie(cookie.Name, cookie.Value, cookie.MaxAge, cookie.Path, cookie.Domain, cookie.Secure, cookie.HttpOnly)
 
-		c.JSON(http.StatusAccepted, responses.UserResponse{Status: http.StatusCreated, Message: "success", Data: map[string]interface{}{"data": u}})
+		c.JSON(http.StatusAccepted, responses.UserResponse{Status: http.StatusAccepted, Message: "success", Data: map[string]interface{}{"data": "Success"}})
 	}
 }
 
+func ValidateToken() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		cookie, _ := c.Cookie("Jwt-Token")
+		token, err := jwt.ParseWithClaims(cookie, &jwt.StandardClaims{}, func(token *jwt.Token) (interface{}, error) {
+			return []byte(SecretKey), nil
+		})
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, responses.UserResponse{Status: http.StatusUnauthorized, Message: "Unauthorized", Data: map[string]interface{}{"data": "Unauthorized, please Authenficate yourself"}})
+			c.Redirect(http.StatusPermanentRedirect, "/api/user/login") //last adding
+			return
+		}
+		claims := token.Claims.(*jwt.StandardClaims)
+		var user models.User
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		err = userCollection.FindOne(ctx, bson.M{"email": claims.Issuer}).Decode(&user)
+
+		c.JSON(http.StatusAccepted, responses.UserResponse{
+			Status:  http.StatusAccepted,
+			Message: "success",
+			Data:    map[string]interface{}{"data": user},
+		})
+		c.Redirect(http.StatusPermanentRedirect, "/api/book/books") //last adding
+		return
+	}
+}
 func RegisterUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var u models.User
@@ -273,6 +312,7 @@ func RegisterUser() gin.HandlerFunc {
 		c.JSON(http.StatusCreated, responses.UserResponse{Status: http.StatusCreated, Message: "success", Data: map[string]interface{}{"data": result}})
 	}
 }
+
 func LogoutUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		cookie := http.Cookie{
