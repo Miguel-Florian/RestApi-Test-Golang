@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -218,17 +219,17 @@ func LoginUser() gin.HandlerFunc {
 		defer cancel()
 		err := userCollection.FindOne(ctx, bson.M{"email": data_receive.Email}).Decode(&u)
 		if err != nil {
-			c.JSON(http.StatusNotFound, responses.UserResponse{Status: http.StatusNotFound, Message: "Unrecaheable Email !", Data: map[string]interface{}{"data": err.Error() + "Email Introuvable"}})
+			c.JSON(http.StatusNotFound, responses.UserResponse{Status: http.StatusNotFound, Message: "Unrecaheable Email !", Data: map[string]interface{}{"data": err.Error() + ",Email Introuvable"}})
 			return
 		}
 		if err := bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(data_receive.Password)); err != nil {
-			c.JSON(http.StatusBadRequest, responses.UserResponse{Status: http.StatusBadRequest, Message: "Incorrect password", Data: map[string]interface{}{"data": err.Error() + "Code de sécurité incorrect"}})
+			c.JSON(http.StatusBadRequest, responses.UserResponse{Status: http.StatusBadRequest, Message: "Incorrect password", Data: map[string]interface{}{"data": err.Error() + ",Code de sécurité incorrect"}})
 			return
 		}
-		expTime := time.Now().Add(time.Hour * 24)
+		expTime := time.Now().Add(48 * time.Hour)
 		claims := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.StandardClaims{
 			ExpiresAt: expTime.Unix(),
-			Id:        u.FirstName + "" + u.LastName,
+			Id:        u.ID.String(),
 			Issuer:    u.Email,
 		})
 		token, err := claims.SignedString([]byte(SecretKey))
@@ -242,42 +243,49 @@ func LoginUser() gin.HandlerFunc {
 			Path:     "/api/user/login",
 			Domain:   "Localhost",
 			Expires:  expTime,
-			MaxAge:   3600,
+			MaxAge:   3600 * 48,
 			Secure:   false,
 			HttpOnly: true,
 		}
 		c.SetCookie(cookie.Name, cookie.Value, cookie.MaxAge, cookie.Path, cookie.Domain, cookie.Secure, cookie.HttpOnly)
-
-		c.JSON(http.StatusAccepted, responses.UserResponse{Status: http.StatusAccepted, Message: "success", Data: map[string]interface{}{"data": "Success"}})
+		//c.Writer.Header().Add("Authorisation", cookie.Value)
+		c.JSON(http.StatusAccepted, responses.UserResponse{Status: http.StatusAccepted, Message: "success", Data: map[string]interface{}{"data": u.Username}})
 	}
 }
 
 func ValidateToken() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		cookie, _ := c.Cookie("Jwt-Token")
-		token, err := jwt.ParseWithClaims(cookie, &jwt.StandardClaims{}, func(token *jwt.Token) (interface{}, error) {
-			return []byte(SecretKey), nil
-		})
-		if err != nil {
-			c.JSON(http.StatusUnauthorized, responses.UserResponse{Status: http.StatusUnauthorized, Message: "Unauthorized", Data: map[string]interface{}{"data": "Unauthorized, please Authenficate yourself"}})
-			c.Redirect(http.StatusPermanentRedirect, "/api/user/login") //last adding
+		const BEARER = "Bearer "
+		authHeader := c.Request.Header.Get("Authorization")
+		tokenString := authHeader[len(BEARER):]
+		if tokenString == "" || authHeader == "" {
+			c.JSON(http.StatusBadRequest, responses.UserResponse{Status: http.StatusBadRequest, Message: "Token inexistant", Data: map[string]interface{}{"data": "Token inexistant ou invalide"}})
 			return
 		}
-		claims := token.Claims.(*jwt.StandardClaims)
+		token, _ := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
+			}
+			return []byte(SecretKey), nil
+		})
+		claims := token.Claims.(jwt.MapClaims)
 		var user models.User
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
-		err = userCollection.FindOne(ctx, bson.M{"email": claims.Issuer}).Decode(&user)
-
+		err := userCollection.FindOne(ctx, bson.M{"email": claims["iss"]}).Decode(&user)
+		if err != nil {
+			c.JSON(http.StatusNotFound, responses.UserResponse{Status: http.StatusNotFound, Message: "Unexisting Email ", Data: map[string]interface{}{"data": "Email inexistant"}})
+			return
+		}
 		c.JSON(http.StatusAccepted, responses.UserResponse{
 			Status:  http.StatusAccepted,
-			Message: "success",
-			Data:    map[string]interface{}{"data": user},
+			Message: "Token valid, User connected",
+			Data:    map[string]interface{}{"data": user.FirstName + " " + user.LastName},
 		})
-		c.Redirect(http.StatusPermanentRedirect, "/api/book/books") //last adding
 		return
 	}
 }
+
 func RegisterUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var u models.User
