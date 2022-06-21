@@ -1,6 +1,4 @@
-# This project isn't a real project. I done it to train myself and learn Go language programming
-
-## Steps
+# Steps
 
 - Build all routes with routers with the Gin package (done)
 - Etablish the controllers functions (done)
@@ -8,6 +6,4 @@
 - Write the logic of controllers functions (done)
 - Test the results with the json format (done)
 - Write Jwt token for authentication(done)
-- Write an authorization func for each route group
-- Coding interfaces
-- Check how can we upload a book on mongodb and check how can we download it
+- Write an authorization func for each route group (done)
