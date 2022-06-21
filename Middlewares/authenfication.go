@@ -1,5 +1,57 @@
 package middleware
 
+import (
+	"context"
+	"net/http"
+	"time"
+
+	config "github.com/Miguel-Florian/Electronic-bookshop-of-Higher-science-computer-school-of-Logbessou/Config"
+	controllers "github.com/Miguel-Florian/Electronic-bookshop-of-Higher-science-computer-school-of-Logbessou/Controllers"
+	models "github.com/Miguel-Florian/Electronic-bookshop-of-Higher-science-computer-school-of-Logbessou/Models"
+	"github.com/Miguel-Florian/Electronic-bookshop-of-Higher-science-computer-school-of-Logbessou/responses"
+	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator"
+	"go.mongodb.org/mongo-driver/mongo"
+	"golang.org/x/crypto/bcrypt"
+	"gopkg.in/mgo.v2/bson"
+)
+
+func Auth() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		controllers.ValidateToken()
+		c.Next()
+	}
+}
+
+var adminCollection *mongo.Collection = config.GetCollection(config.DB, "admin")
+var validate = validator.New()
+
+func AuthLogging() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var data_receive models.AdminLogin
+		var u models.Admin
+		if err := c.ShouldBindJSON(&data_receive); err != nil {
+			return
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		err := adminCollection.FindOne(ctx, bson.M{"email": data_receive.Email}).Decode(&u)
+		if err != nil {
+			c.JSON(http.StatusNotFound, responses.UserResponse{Status: http.StatusNotFound, Message: "Unrecaheable Email !", Data: map[string]interface{}{"data": err.Error() + ",Email Introuvable"}})
+			return
+		}
+		if err := bcrypt.CompareHashAndPassword([]byte("migflor04"), []byte(data_receive.Password)); err != nil {
+			c.JSON(http.StatusBadRequest, responses.UserResponse{Status: http.StatusBadRequest, Message: "Incorrect password", Data: map[string]interface{}{"data": err.Error() + ",Code de sécurité incorrect"}})
+			return
+		}
+		if u.Username == "Miguel" {
+			c.JSON(http.StatusAccepted, responses.UserResponse{Status: http.StatusAccepted, Message: "Credentials ok", Data: map[string]interface{}{"data": "Connected"}})
+			return
+		}
+		c.Next()
+	}
+}
+
 /*
 import (
 	common "github.com/Miguel-Florian/Electronic-bookshop-of-Higher-science-computer-school-of-Logbessou/Common"
@@ -35,24 +87,7 @@ import (
 		}
 	})*/
 
-/*func Auth() gin.HandlerFunc {
-	return func(context *gin.Context) {
-		tokenString := context.GetHeader("Authorization")
-		if tokenString == "" {
-			context.JSON(401, gin.H{"error": "request does not contain an access token"})
-			context.Abort()
-			return
-		}
-		err := ValidateToken(tokenString)
-		if err != nil {
-			context.JSON(401, gin.H{"error": err.Error()})
-			context.Abort()
-			return
-		}
-		context.Next()
-	}
-}
-func ValidateToken(t string){
+/*func ValidateToken(t string){
 
 }
 */
