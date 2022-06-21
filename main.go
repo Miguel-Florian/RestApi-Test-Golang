@@ -12,13 +12,15 @@ import (
 func main() {
 	fmt.Println("Starting server ...")
 	r := gin.Default()
-
+	r.RedirectTrailingSlash = true
+    r.RedirectFixedPath = true
 	//run database
 	config.ConnectDB()
 
 	// Initialize all routes
 	routers.UserRoute(r)
 	routers.BookRoute(r)
+	routers.AdminRoute(r)
 
 	r.GET("/", func(c *gin.Context) {
 		c.JSON(200, gin.H{
